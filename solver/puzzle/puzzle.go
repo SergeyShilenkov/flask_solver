@@ -20,21 +20,32 @@ type Puzzle struct {
 	Solved                 bool
 }
 
-func NewPuzzle(initialColors [][FLASK_SIZE]int, numbUnknownColors int, unknownColorIsLast bool, showMoves bool) *Puzzle {
+func NewPuzzle(initialColors [][FLASK_SIZE]int, uc []int, numbUnknownColors int, unknownColorIsLast bool, showMoves bool) *Puzzle {
+	flasks := make([]*Flask, len(initialColors))
 	initialStage := make([]*Flask, len(initialColors))
-	initialStageForPrint := make([]*Flask, len(initialColors))
+	tmpFlask := make([]int, FLASK_SIZE)
+	idxUc := 0
 
 	for idx, flask := range initialColors {
-		initialStage[idx] = NewFlask(idx, flask[:], FLASK_SIZE)
-		initialStageForPrint[idx] = NewFlask(idx, flask[:], FLASK_SIZE)
+		for idxC, c := range flask {
+			if c == 1 && uc != nil {
+				tmpFlask[idxC] = uc[idxUc]
+				idxUc++
+			} else {
+				tmpFlask[idxC] = c
+			}
+		}
+		flasks[idx] = NewFlask(idx, tmpFlask)
+		initialStage[idx] = NewFlask(idx, tmpFlask)
 	}
+	// fmt.Printf("%v - %v\n", uc, initialStage)
 
 	return &Puzzle{
 		confNumbUnknownColors:  numbUnknownColors,
 		confUnknownColorIsLast: unknownColorIsLast,
 		confShowMoves:          showMoves,
-		initialFlasks:          initialStageForPrint,
-		flasks:                 initialStage,
+		initialFlasks:          initialStage,
+		flasks:                 flasks,
 		Moves:                  []*Move{},
 		states:                 make(map[string]struct{}),
 		Solved:                 false,

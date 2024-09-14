@@ -20,8 +20,9 @@ func colorsInHash(colors []int, permutation []int) int64 {
 	result := int64(0)
 
 	for i := 0; i < len(colors); i++ {
-		result += int64(math.Pow(float64(100), float64(len(permutation)-1-permutation[i]))) * int64(colors[i])
+		result += int64(math.Pow(float64(100), float64(len(permutation)-1-i))) * int64(colors[permutation[i]])
 	}
+
 	return result
 }
 
@@ -70,11 +71,10 @@ func parallelSolvePuzzles(data [][puzzle.FLASK_SIZE]int, maxGoroutines int, show
 	}
 
 	ch := make(chan *puzzle.Puzzle, maxGoroutines)
-	// puzzles := make([]*puzzle.Puzzle, maxGoroutines)
 	hashPuzzles := make(map[int64]struct{})
 
 	var intPuzzle *puzzle.Puzzle
-	amountMoves := 9999
+	amountMoves := math.MaxInt32
 	amountUnsolvedPermutations := 0
 	amountRepeatPermutations := 0
 
@@ -84,8 +84,7 @@ func parallelSolvePuzzles(data [][puzzle.FLASK_SIZE]int, maxGoroutines int, show
 		ip := 0
 		for ip < maxGoroutines && (sp+ip < len(permutations)) {
 			cis := colorsInHash(unknownColors, permutations[sp+ip])
-			_, exist := hashPuzzles[cis]
-			if exist {
+			if _, exist := hashPuzzles[cis]; exist {
 				amountRepeatPermutations++
 				sp++
 				continue
@@ -93,28 +92,16 @@ func parallelSolvePuzzles(data [][puzzle.FLASK_SIZE]int, maxGoroutines int, show
 
 			hashPuzzles[cis] = struct{}{}
 
-			go func(inData [][puzzle.FLASK_SIZE]int, uc []int, perm []int) {
-				internalData := make([][puzzle.FLASK_SIZE]int, len(inData))
-				copy(internalData, inData)
-
-				idxUc := 0
-
-				for idxF, f := range internalData {
-					for idxC, c := range f {
-						if c == 1 {
-							for idxP, p := range perm {
-								if p == idxUc {
-									internalData[idxF][idxC] = uc[idxP]
-								}
-							}
-							idxUc++
-						}
-					}
+			go func(n int) {
+				for i := 0; i < len(unknownColors); i++ {
+					permutations[n][i] = unknownColors[permutations[n][i]]
 				}
-				p := puzzle.NewPuzzle(internalData, 0, false, showMoves)
+
+				p := puzzle.NewPuzzle(data, permutations[n], 0, false, showMoves)
 				p.Solve()
+
 				ch <- p
-			}(data, unknownColors, permutations[sp+ip])
+			}(sp + ip)
 			ip++
 		}
 
@@ -134,7 +121,12 @@ func parallelSolvePuzzles(data [][puzzle.FLASK_SIZE]int, maxGoroutines int, show
 	}
 	close(ch)
 
-	return fmt.Sprintf("ПРОВЕРЕНО: %d\nУНИКАЛЬНЫХ ВАРИАНТОВ: %d\nНевозможных комбинаций: %d\nПовторных комбинаций: %d\nНеизвестные цвета: %v\n%s", sp, len(hashPuzzles), amountUnsolvedPermutations, amountRepeatPermutations, unknownColors, intPuzzle.String()), nil
+	uColorsEmoji := make([]*puzzle.Color, len(unknownColors))
+	for idx, c := range unknownColors {
+		uColorsEmoji[idx] = puzzle.COLORCONVERT[c]
+	}
+
+	return fmt.Sprintf("ПРОВЕРЕНО: %d\nУНИКАЛЬНЫХ ВАРИАНТОВ: %d\nНевозможных комбинаций: %d\nПовторных комбинаций: %d\nНеизвестные цвета: %v\n%s", sp, len(hashPuzzles), amountUnsolvedPermutations, amountRepeatPermutations, uColorsEmoji, intPuzzle.String()), nil
 }
 
 func SolvePuzzle(config *ConfigData, data *[][puzzle.FLASK_SIZE]int) (string, error) {
@@ -148,7 +140,7 @@ func SolvePuzzle(config *ConfigData, data *[][puzzle.FLASK_SIZE]int) (string, er
 		}
 		return solution, nil
 	} else {
-		task := puzzle.NewPuzzle(*data, config.NumbUnknownColors, config.UnknownColorIsLast, config.ShowMoves)
+		task := puzzle.NewPuzzle(*data, nil, config.NumbUnknownColors, config.UnknownColorIsLast, config.ShowMoves)
 		task.Solve()
 		return task.String(), nil
 

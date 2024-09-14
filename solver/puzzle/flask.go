@@ -5,7 +5,6 @@ import "strings"
 type Flask struct {
 	num   int
 	balls []*Color
-	size  int
 }
 
 type UpperBalls struct {
@@ -13,18 +12,18 @@ type UpperBalls struct {
 	amount int
 }
 
-func NewFlask(n int, b []int, s int) *Flask {
+func NewFlask(n int, b []int) *Flask {
 	colors := make([]*Color, 0, FLASK_SIZE)
 	for _, ball := range b {
 		if ball != 0 {
 			colors = append(colors, COLORCONVERT[ball])
 		}
 	}
-	return &Flask{num: n, balls: colors, size: s}
+	return &Flask{num: n, balls: colors}
 }
 
 func (f *Flask) isFull() bool {
-	return len(f.balls) == f.size
+	return len(f.balls) == FLASK_SIZE
 }
 
 func (f *Flask) isEmpty() bool {
@@ -32,7 +31,7 @@ func (f *Flask) isEmpty() bool {
 }
 
 func (f *Flask) freeSpace() int {
-	return f.size - len(f.balls)
+	return FLASK_SIZE - len(f.balls)
 }
 
 func (f *Flask) hasOneColor() bool {
