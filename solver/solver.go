@@ -26,7 +26,7 @@ func colorsInHash(colors []int, permutation []int) int64 {
 	return result
 }
 
-func checkUnknownColors(data *[][puzzle.FLASK_SIZE]int) (int, []int, error) {
+func getUnknownColors(data *[][puzzle.FLASK_SIZE]int) (int, []int, error) {
 	numbUnknownColors := make(map[int]int)
 	numbUnknownColors[1] = (len(*data) - 2) * puzzle.FLASK_SIZE
 	totalNumbUnknownColors := numbUnknownColors[1]
@@ -73,7 +73,7 @@ func checkUnknownColors(data *[][puzzle.FLASK_SIZE]int) (int, []int, error) {
 }
 
 func parallelSolvePuzzles(data [][puzzle.FLASK_SIZE]int, maxGoroutines int, showMoves bool) (string, error) {
-	totalNumbUnknownColors, unknownColors, err := checkUnknownColors(&data)
+	totalNumbUnknownColors, unknownColors, err := getUnknownColors(&data)
 	if err != nil {
 		return "", err
 	}
