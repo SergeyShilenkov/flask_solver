@@ -23,20 +23,19 @@ type Puzzle struct {
 func NewPuzzle(initialColors [][FLASK_SIZE]int, uc []int, numbUnknownColors int, unknownColorIsLast bool, showMoves bool) *Puzzle {
 	flasks := make([]*Flask, len(initialColors))
 	initialStage := make([]*Flask, len(initialColors))
-	tmpFlask := make([]int, FLASK_SIZE)
 	idxUc := 0
 
 	for idx, flask := range initialColors {
 		for idxC, c := range flask {
 			if c == 1 && uc != nil {
-				tmpFlask[idxC] = uc[idxUc]
+				flask[idxC] = uc[idxUc]
 				idxUc++
 			} else {
-				tmpFlask[idxC] = c
+				flask[idxC] = c
 			}
 		}
-		flasks[idx] = NewFlask(idx, tmpFlask)
-		initialStage[idx] = NewFlask(idx, tmpFlask)
+		flasks[idx] = NewFlask(idx, flask)
+		initialStage[idx] = NewFlask(idx, flask)
 	}
 
 	return &Puzzle{
@@ -89,7 +88,7 @@ func (p *Puzzle) isSolved() bool {
 }
 
 func (p *Puzzle) getPossibleMoves() []*Move {
-	moves := []*Move{}
+	moves := make([]*Move, 0, 10)
 
 	for idx_f, flask := range p.flasks {
 		if flask.isSolved() || flask.isAlmostSolved() {
@@ -106,22 +105,19 @@ func (p *Puzzle) getPossibleMoves() []*Move {
 				continue
 			}
 			if potentional_flask.canReceive(upperballs.color) {
-				if upperballs.amount > potentional_flask.freeSpace() {
-					upperballs.amount = potentional_flask.freeSpace()
-				}
+				upperballs.amount = min(upperballs.amount, potentional_flask.freeSpace())
+
 				moves = append(moves, NewMove(flask.num, potentional_flask.num, upperballs))
 			}
 		}
-
 	}
+
 	return moves
 }
 
 func (p *Puzzle) makeMove(move *Move) {
-	for i := 0; i < move.ballAmount; i++ {
-		ball := p.flasks[move.from].pop()
-		p.flasks[move.to].push(ball)
-	}
+	ball := p.flasks[move.from].pop(move.ballAmount)
+	p.flasks[move.to].push(ball, move.ballAmount)
 }
 
 func (p *Puzzle) commitMove(move *Move) string {
@@ -131,10 +127,8 @@ func (p *Puzzle) commitMove(move *Move) string {
 }
 
 func (p *Puzzle) rollBackMove(move *Move) {
-	for i := 0; i < move.ballAmount; i++ {
-		ball := p.flasks[move.to].pop()
-		p.flasks[move.from].push(ball)
-	}
+	ball := p.flasks[move.to].pop(move.ballAmount)
+	p.flasks[move.from].push(ball, move.ballAmount)
 	p.Moves = p.Moves[:len(p.Moves)-1]
 }
 
@@ -160,7 +154,6 @@ func (p *Puzzle) Solve() bool {
 	}
 
 	return false
-
 }
 
 func (p *Puzzle) snapshot() string {
@@ -172,21 +165,17 @@ func (p *Puzzle) snapshot() string {
 }
 
 func (p *Puzzle) getStageStr() string {
-	lines := make([]string, 0, 4*17)
+	lines := make([]string, 0, FLASK_SIZE*17)
+	line := make([]string, len(p.flasks))
 
-	for line := FLASK_SIZE - 1; line >= 0; line-- {
-		for _, flask := range p.flasks {
-			if len(flask.balls) < line+1 {
-				// lines = append(lines, string(EMPTY.emoji))
-				lines = append(lines, "  ")
-			} else {
-				lines = append(lines, string(flask.balls[line].emoji))
-			}
+	for i := FLASK_SIZE - 1; i >= 0; i-- {
+		for iF, flask := range p.flasks {
+			line[iF] = string(flask.balls[i].emoji)
 		}
-		lines = append(lines, "\n")
+		lines = append(lines, strings.Join(line, ""))
 	}
 
-	return strings.Join(lines, "")
+	return strings.Join(lines, "\n")
 }
 
 func (p *Puzzle) String() string {
@@ -199,24 +188,13 @@ func (p *Puzzle) String() string {
 	p.flasks = p.initialFlasks
 	solutionInText = append(solutionInText, "Начальная позиция:", p.getStageStr(), "==============================")
 
-	prev_move, multiplier := p.Moves[0], 1
-	for _, move := range p.Moves[1:] {
-		if *move == *prev_move {
-			multiplier++
-		} else {
-			if p.confShowMoves {
-				p.makeMove(prev_move)
-				solutionInText = append(solutionInText, p.getStageStr()[:len(p.getStageStr())-1])
-			}
-			solutionInText = append(solutionInText, fmt.Sprintf("%dth %s x%d -> %dth tube", prev_move.from+1, prev_move.verboseRuName, multiplier, prev_move.to+1))
-			prev_move, multiplier = move, 1
+	for idx, move := range p.Moves {
+		if p.confShowMoves {
+			p.makeMove(move)
+			solutionInText = append(solutionInText, p.getStageStr())
 		}
+		solutionInText = append(solutionInText, fmt.Sprintf("%d: %dth %s x%d -> %dth tube", idx, move.from+1, move.verboseRuName, move.ballAmount, move.to+1))
 	}
-	if p.confShowMoves {
-		p.makeMove(prev_move)
-		solutionInText = append(solutionInText, p.getStageStr()[:len(p.getStageStr())-1])
-	}
-	solutionInText = append(solutionInText, fmt.Sprintf("%dth %s x%d -> %dth tube\n", prev_move.from+1, prev_move.verboseRuName, multiplier, prev_move.to+1))
 
-	return fmt.Sprintf("Всего ходов: %d\n%s", len(p.Moves), strings.Join(solutionInText, "\n"))
+	return fmt.Sprintf("Всего ходов: %d\n%s\n\n", len(p.Moves), strings.Join(solutionInText, "\n"))
 }

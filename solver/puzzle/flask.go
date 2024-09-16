@@ -1,10 +1,12 @@
 package puzzle
 
-import "strings"
+import (
+	"strings"
+)
 
 type Flask struct {
 	num   int
-	balls []*Color
+	balls [FLASK_SIZE]*Color
 }
 
 type UpperBalls struct {
@@ -12,32 +14,34 @@ type UpperBalls struct {
 	amount int
 }
 
-func NewFlask(n int, b []int) *Flask {
-	colors := make([]*Color, 0, FLASK_SIZE)
-	for _, ball := range b {
-		if ball != 0 {
-			colors = append(colors, COLORCONVERT[ball])
-		}
+func NewFlask(n int, b [FLASK_SIZE]int) *Flask {
+	colors := [FLASK_SIZE]*Color{}
+	for idx, ball := range b {
+		colors[idx] = COLORCONVERT[ball]
 	}
 	return &Flask{num: n, balls: colors}
 }
 
 func (f *Flask) isFull() bool {
-	return len(f.balls) == FLASK_SIZE
+	return f.balls[FLASK_SIZE-1] != EMPTY
 }
 
 func (f *Flask) isEmpty() bool {
-	return len(f.balls) == 0
+	return f.balls[0] == EMPTY
 }
 
 func (f *Flask) freeSpace() int {
-	return FLASK_SIZE - len(f.balls)
+	fs := 0
+	for i := FLASK_SIZE - 1; i > 0 && f.balls[i] == EMPTY; i-- {
+		fs++
+	}
+	return fs
 }
 
 func (f *Flask) hasOneColor() bool {
 	result := true
 	for _, ball := range f.balls {
-		if *ball != *(f.balls[0]) {
+		if ball != f.balls[0] && ball != EMPTY {
 			result = false
 		}
 	}
@@ -49,15 +53,29 @@ func (f *Flask) isSolved() bool {
 }
 
 func (f *Flask) isAlmostSolved() bool {
-	return len(f.balls) == FLASK_SIZE-1 && f.hasOneColor()
-}
+	if f.balls[FLASK_SIZE-1] != EMPTY {
+		return false
+	}
 
-func (f *Flask) upperBalls() *UpperBalls {
-	i := len(f.balls) - 1
+	i := FLASK_SIZE - 2
 	for i > 0 && f.balls[i] == f.balls[i-1] {
 		i--
 	}
-	return &UpperBalls{color: f.balls[len(f.balls)-1], amount: len(f.balls) - i}
+
+	return i == 0
+}
+
+func (f *Flask) upperBalls() *UpperBalls {
+	i := FLASK_SIZE - 1
+	for f.balls[i] == EMPTY {
+		i--
+	}
+	amountWoEmpty := i
+
+	for i > 0 && f.balls[i] == f.balls[i-1] {
+		i--
+	}
+	return &UpperBalls{color: f.balls[amountWoEmpty], amount: amountWoEmpty + 1 - i}
 }
 
 func (f *Flask) canReceive(b *Color) bool {
@@ -68,27 +86,34 @@ func (f *Flask) canReceive(b *Color) bool {
 		return true
 	}
 	upper := f.upperBalls()
-	return *(upper.color) == *b
+	return upper.color == b
 }
 
-func (f *Flask) pop() *Color {
-	last := f.balls[len(f.balls)-1]
-	f.balls = f.balls[:len(f.balls)-1]
+func (f *Flask) pop(n int) *Color {
+	var last *Color
+	for i := FLASK_SIZE - 1; i >= 0 && n > 0; i-- {
+		if f.balls[i] != EMPTY {
+			last = f.balls[i]
+			f.balls[i] = EMPTY
+			n--
+		}
+	}
 	return last
 }
 
-func (f *Flask) push(b *Color) {
-	f.balls = append(f.balls, b)
+func (f *Flask) push(b *Color, n int) {
+	for i := 0; i < FLASK_SIZE && n > 0; i++ {
+		if f.balls[i] == EMPTY {
+			f.balls[i] = b
+			n--
+		}
+	}
 }
 
 func (f *Flask) String() string {
 	state := make([]string, FLASK_SIZE)
 	for i := 0; i < FLASK_SIZE; i++ {
-		if i <= len(f.balls)-1 {
-			state[i] = f.balls[i].Symbol
-		} else {
-			state[i] = "-"
-		}
+		state[i] = f.balls[i].Symbol
 	}
 	return strings.Join(state, "")
 }
