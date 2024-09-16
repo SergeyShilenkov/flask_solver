@@ -26,12 +26,12 @@ func colorsInHash(colors []int, permutation []int) int64 {
 	return result
 }
 
-func parallelSolvePuzzles(data [][puzzle.FLASK_SIZE]int, maxGoroutines int, showMoves bool) (string, error) {
+func checkUnknownColors(data *[][puzzle.FLASK_SIZE]int) (int, []int, error) {
 	numbUnknownColors := make(map[int]int)
-	numbUnknownColors[1] = (len(data) - 2) * puzzle.FLASK_SIZE
+	numbUnknownColors[1] = (len(*data) - 2) * puzzle.FLASK_SIZE
 	totalNumbUnknownColors := numbUnknownColors[1]
 
-	for _, f := range data {
+	for _, f := range *data {
 		for _, c := range f {
 			if c != 0 && c != 1 {
 				if _, ok := numbUnknownColors[c]; ok {
@@ -49,15 +49,14 @@ func parallelSolvePuzzles(data [][puzzle.FLASK_SIZE]int, maxGoroutines int, show
 		}
 	}
 	if numbUnknownColors[1] >= puzzle.FLASK_SIZE {
-		return "", &UndefinedColors{Amount: numbUnknownColors[1], FlaskSize: puzzle.FLASK_SIZE}
+		return 0, nil, &UndefinedColors{Amount: numbUnknownColors[1], FlaskSize: puzzle.FLASK_SIZE}
 	}
 	if len(numbUnknownColors) == 1 {
-		return "", &NoUnknownColors{}
+		return 0, nil, &NoUnknownColors{}
 	}
 	if len(numbUnknownColors)-1 > 8 {
-		return "", &TooManyUnknownColors{Amount: len(numbUnknownColors) - 1}
+		return 0, nil, &TooManyUnknownColors{Amount: len(numbUnknownColors) - 1}
 	}
-	permutations := combin.Permutations(totalNumbUnknownColors, totalNumbUnknownColors)
 
 	unknownColors := make([]int, totalNumbUnknownColors)
 	idx := 0
@@ -69,6 +68,17 @@ func parallelSolvePuzzles(data [][puzzle.FLASK_SIZE]int, maxGoroutines int, show
 			}
 		}
 	}
+
+	return totalNumbUnknownColors, unknownColors, nil
+}
+
+func parallelSolvePuzzles(data [][puzzle.FLASK_SIZE]int, maxGoroutines int, showMoves bool) (string, error) {
+	totalNumbUnknownColors, unknownColors, err := checkUnknownColors(&data)
+	if err != nil {
+		return "", err
+	}
+
+	permutations := combin.Permutations(totalNumbUnknownColors, totalNumbUnknownColors)
 
 	ch := make(chan *puzzle.Puzzle, maxGoroutines)
 	hashPuzzles := make(map[int64]struct{})

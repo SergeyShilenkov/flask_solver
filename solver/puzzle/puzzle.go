@@ -38,7 +38,6 @@ func NewPuzzle(initialColors [][FLASK_SIZE]int, uc []int, numbUnknownColors int,
 		flasks[idx] = NewFlask(idx, tmpFlask)
 		initialStage[idx] = NewFlask(idx, tmpFlask)
 	}
-	// fmt.Printf("%v - %v\n", uc, initialStage)
 
 	return &Puzzle{
 		confNumbUnknownColors:  numbUnknownColors,
