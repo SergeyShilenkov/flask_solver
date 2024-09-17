@@ -5,10 +5,9 @@ import (
 )
 
 type Color struct {
-	Symbol          string
-	verbose_name    string
-	verbose_ru_name string
-	emoji           emoji.Emoji
+	Symbol  [2]byte
+	verbose string
+	emoji   emoji.Emoji
 }
 
 func (c Color) String() string {
@@ -16,26 +15,26 @@ func (c Color) String() string {
 }
 
 var (
-	RED    = &Color{"R", "Red", "Красный", emoji.RedCircle}
-	GREEN  = &Color{"G", "Green", "Зелёный", emoji.GreenCircle}
-	ORANGE = &Color{"O", "Orange", "Оранжевый", emoji.OrangeCircle}
-	BLUE   = &Color{"B", "Blue", "Синий", emoji.BlueCircle}
-	PURPLE = &Color{"V", "Purple", "Фиолетовый", emoji.PurpleCircle}
-	YELLOW = &Color{"Y", "Yellow", "Жёлтый", emoji.YellowCircle}
-	GRAY   = &Color{"Q", "Gray", "Серый", emoji.WhiteCircle}
-	BROWN  = &Color{"X", "Brown", "Коричневый", emoji.BrownCircle}
+	RED    = &Color{[2]byte{'-', 'R'}, "Красный", emoji.RedCircle}
+	GREEN  = &Color{[2]byte{'-', 'G'}, "Зелёный", emoji.GreenCircle}
+	ORANGE = &Color{[2]byte{'-', 'O'}, "Оранжевый", emoji.OrangeCircle}
+	BLUE   = &Color{[2]byte{'-', 'B'}, "Синий", emoji.BlueCircle}
+	PURPLE = &Color{[2]byte{'-', 'V'}, "Фиолетовый", emoji.PurpleCircle}
+	YELLOW = &Color{[2]byte{'-', 'Y'}, "Жёлтый", emoji.YellowCircle}
+	GRAY   = &Color{[2]byte{'-', 'Q'}, "Серый", emoji.WhiteCircle}
+	BROWN  = &Color{[2]byte{'-', 'X'}, "Коричневый", emoji.BrownCircle}
 
-	PINK      = &Color{"P", "Pink", "Розовый", emoji.Brain}
-	LILAC     = &Color{"Pu", "Lilac", "Сиреневый", emoji.PurpleHeart}
-	CRIMSON   = &Color{"c", "Crimson", "Малиновый", emoji.RedHeart}
-	TURQUOISE = &Color{"b", "Turquoise", "Бирюзовый", emoji.BlueHeart}
-	L_GREEN   = &Color{"g", "Light Green", "Светло-зелёный", emoji.GreenHeart}
+	PINK      = &Color{[2]byte{'-', 'P'}, "Розовый", emoji.Brain}
+	LILAC     = &Color{[2]byte{'P', 'u'}, "Сиреневый", emoji.PurpleHeart}
+	CRIMSON   = &Color{[2]byte{'-', 'c'}, "Малиновый", emoji.RedHeart}
+	TURQUOISE = &Color{[2]byte{'-', 'b'}, "Бирюзовый", emoji.BlueHeart}
+	L_GREEN   = &Color{[2]byte{'-', 'g'}, "Светло-зелёный", emoji.GreenHeart}
 
-	D_BLUE = &Color{"BB", "Dark blue", "Тёмно-синий", emoji.BlueSquare}
+	D_BLUE = &Color{[2]byte{'B', 'B'}, "Тёмно-синий", emoji.BlueSquare}
 
-	UNKNOWN = &Color{"U", "Unknown", "Неизвестный", emoji.QuestionMark}
+	UNKNOWN = &Color{[2]byte{'-', 'U'}, "Неизвестный", emoji.QuestionMark}
 
-	EMPTY = &Color{"E", "Empty", "-", emoji.TumblerGlass}
+	EMPTY = &Color{[2]byte{'-', 'E'}, "-", emoji.TumblerGlass}
 
 	COLORCONVERT = map[int]*Color{
 		0:  EMPTY,

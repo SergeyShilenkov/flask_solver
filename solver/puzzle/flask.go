@@ -1,9 +1,5 @@
 package puzzle
 
-import (
-	"strings"
-)
-
 type Flask struct {
 	num   int
 	balls [FLASK_SIZE]*Color
@@ -110,10 +106,12 @@ func (f *Flask) push(b *Color, n int) {
 	}
 }
 
-func (f *Flask) String() string {
-	state := make([]string, FLASK_SIZE)
+func (f *Flask) String() []byte {
+	state := make([]byte, FLASK_SIZE*len(f.balls[0].Symbol))
 	for i := 0; i < FLASK_SIZE; i++ {
-		state[i] = f.balls[i].Symbol
+		state[2*i] = f.balls[i].Symbol[0]
+		state[2*i+1] = f.balls[i].Symbol[1]
 	}
-	return strings.Join(state, "")
+
+	return state
 }

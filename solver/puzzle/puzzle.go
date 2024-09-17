@@ -120,7 +120,7 @@ func (p *Puzzle) makeMove(move *Move) {
 	p.flasks[move.to].push(ball, move.ballAmount)
 }
 
-func (p *Puzzle) commitMove(move *Move) string {
+func (p *Puzzle) commitMove(move *Move) []byte {
 	p.makeMove(move)
 	p.Moves = append(p.Moves, move)
 	return p.snapshot()
@@ -139,7 +139,7 @@ func (p *Puzzle) Solve() bool {
 	}
 
 	for _, move := range p.getPossibleMoves() {
-		newSnapshot := p.commitMove(move)
+		newSnapshot := string(p.commitMove(move))
 		_, exist := p.states[newSnapshot]
 		if exist {
 			p.rollBackMove(move)
@@ -156,26 +156,28 @@ func (p *Puzzle) Solve() bool {
 	return false
 }
 
-func (p *Puzzle) snapshot() string {
-	snapshot := make([]string, len(p.flasks))
-	for idx, flask := range p.flasks {
-		snapshot[idx] = flask.String()
+func (p *Puzzle) snapshot() []byte {
+	snapshot := make([]byte, 0, len(p.flasks)*FLASK_SIZE*2)
+	for _, flask := range p.flasks {
+		snapshot = append(snapshot, flask.String()...)
 	}
-	return strings.Join(snapshot, "")
+
+	return snapshot
 }
 
-func (p *Puzzle) getStageStr() string {
-	lines := make([]string, 0, FLASK_SIZE*17)
-	line := make([]string, len(p.flasks))
+func (p *Puzzle) getStageStr() []byte {
+	stage := make([]byte, 0, len(p.flasks)*FLASK_SIZE*8)
 
 	for i := FLASK_SIZE - 1; i >= 0; i-- {
-		for iF, flask := range p.flasks {
-			line[iF] = string(flask.balls[i].emoji)
+		for _, flask := range p.flasks {
+			stage = append(stage, []byte(flask.balls[i].emoji)...)
 		}
-		lines = append(lines, strings.Join(line, ""))
+		if i != 0 {
+			stage = append(stage, '\n')
+		}
 	}
 
-	return strings.Join(lines, "\n")
+	return stage
 }
 
 func (p *Puzzle) String() string {
@@ -186,14 +188,14 @@ func (p *Puzzle) String() string {
 	solutionInText := make([]string, 0, 40)
 
 	p.flasks = p.initialFlasks
-	solutionInText = append(solutionInText, "Начальная позиция:", p.getStageStr(), "==============================")
+	solutionInText = append(solutionInText, "Начальная позиция:", string(p.getStageStr()), "==============================")
 
 	for idx, move := range p.Moves {
 		if p.confShowMoves {
 			p.makeMove(move)
-			solutionInText = append(solutionInText, p.getStageStr())
+			solutionInText = append(solutionInText, string(p.getStageStr()))
 		}
-		solutionInText = append(solutionInText, fmt.Sprintf("%d: %dth %s x%d -> %dth tube", idx, move.from+1, move.verboseRuName, move.ballAmount, move.to+1))
+		solutionInText = append(solutionInText, fmt.Sprintf("%d: %dth %s x%d -> %dth tube\n", idx+1, move.from+1, move.verbose, move.ballAmount, move.to+1))
 	}
 
 	return fmt.Sprintf("Всего ходов: %d\n%s\n\n", len(p.Moves), strings.Join(solutionInText, "\n"))
