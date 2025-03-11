@@ -180,12 +180,27 @@ func (p *Puzzle) getStageStr() []byte {
 	return stage
 }
 
+func (p *Puzzle) getColorMaxLength() int {
+	length := -1 << 32
+
+	for _, f := range p.flasks {
+		for _, c := range f.balls {
+			if c != UNKNOWN && c != EMPTY && length < len([]rune(c.verbose)) {
+				length = len([]rune(c.verbose))
+			}
+		}
+	}
+
+	return length
+}
+
 func (p *Puzzle) String() string {
 	if !p.Solved {
 		return fmt.Sprintf("Просмотрено состояний - %d. Решений нет\n", len(p.states))
 	}
 
 	solutionInText := make([]string, 0, 40)
+	lengthColor := p.getColorMaxLength()
 
 	p.flasks = p.initialFlasks
 	solutionInText = append(solutionInText, "Начальная позиция:", string(p.getStageStr()), "==============================")
@@ -193,9 +208,10 @@ func (p *Puzzle) String() string {
 	for idx, move := range p.Moves {
 		if p.confShowMoves {
 			p.makeMove(move)
-			solutionInText = append(solutionInText, string(p.getStageStr()))
+			solutionInText = append(solutionInText, string(p.getStageStr()), fmt.Sprintf("%2d: %2dth %s x%d -> %dth tube", idx+1, move.from+1, move.verbose, move.ballAmount, move.to+1))
+			continue
 		}
-		solutionInText = append(solutionInText, fmt.Sprintf("%d: %dth %s x%d -> %dth tube\n", idx+1, move.from+1, move.verbose, move.ballAmount, move.to+1))
+		solutionInText = append(solutionInText, fmt.Sprintf("%2[1]d: %[2]*[3]s x%[4]d %2[5]dth -> %[6]dth tube", idx+1, lengthColor, move.verbose, move.ballAmount, move.from+1, move.to+1))
 	}
 
 	return fmt.Sprintf("Всего ходов: %d\n%s\n\n", len(p.Moves), strings.Join(solutionInText, "\n"))
