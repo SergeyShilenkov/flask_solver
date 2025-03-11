@@ -136,7 +136,13 @@ func parallelSolvePuzzles(data [][puzzle.FLASK_SIZE]int, maxGoroutines int, show
 		uColorsEmoji[idx] = puzzle.COLORCONVERT[c]
 	}
 
-	return fmt.Sprintf("ПРОВЕРЕНО: %d\nУНИКАЛЬНЫХ ВАРИАНТОВ: %d\nНевозможных комбинаций: %d\nПовторных комбинаций: %d\nНеизвестные цвета: %v\n%s", sp, len(hashPuzzles), amountUnsolvedPermutations, amountRepeatPermutations, uColorsEmoji, intPuzzle.String()), nil
+	solution := "НЕТ РЕШЕНИЙ"
+
+	if intPuzzle != nil {
+		solution = intPuzzle.String()
+	}
+
+	return fmt.Sprintf("ПРОВЕРЕНО: %d\nУНИКАЛЬНЫХ ВАРИАНТОВ: %d\nНевозможных комбинаций: %d\nПовторных комбинаций: %d\nНеизвестные цвета: %v\n%s", sp, len(hashPuzzles), amountUnsolvedPermutations, amountRepeatPermutations, uColorsEmoji, solution), nil
 }
 
 func SolvePuzzle(config *ConfigData, data *[][puzzle.FLASK_SIZE]int) (string, error) {
@@ -149,10 +155,9 @@ func SolvePuzzle(config *ConfigData, data *[][puzzle.FLASK_SIZE]int) (string, er
 			return "", err
 		}
 		return solution, nil
-	} else {
-		task := puzzle.NewPuzzle(*data, nil, config.NumbUnknownColors, config.UnknownColorIsLast, config.ShowMoves)
-		task.Solve()
-		return task.String(), nil
-
 	}
+
+	task := puzzle.NewPuzzle(*data, nil, config.NumbUnknownColors, config.UnknownColorIsLast, config.ShowMoves)
+	task.Solve()
+	return task.String(), nil
 }
